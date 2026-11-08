@@ -207,7 +207,7 @@
           "value": {
             "Origen": "N8n",
             "Fecha": "={{ $now.toFormat('yyyy-MM-dd') }}",
-            "Descripcion": "Se ha empezamos el flujo de N8N"
+            "Descripcion": "Se ha empezamos el flujo de N8N."
           },
           "matchingColumns": [],
           "schema": [
@@ -531,7 +531,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "035adf9b-bf7c-40f6-9433-22c6901b40fc",
+  "versionId": "8bd4a657-030d-4eea-b0f5-da183fb7389f",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "7f9014dae6f4f1efe2c9f31cc6c31829e01424e079768cedc6eb1e01f7040cf9"
