@@ -57,7 +57,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        448,
+        416,
         0
       ]
     },
@@ -290,7 +290,7 @@
           "value": {
             "Origen": "N8n",
             "Fecha": "={{ $now.toFormat('yyyy-MM-dd') }}",
-            "Descripcion": "Se Obtiene el Token"
+            "Descripcion": "Se Obtiene el Token con exito"
           },
           "matchingColumns": [],
           "schema": [
@@ -531,7 +531,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "9097c982-c5e9-40e7-83e4-fd1547f36335",
+  "versionId": "035adf9b-bf7c-40f6-9433-22c6901b40fc",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "7f9014dae6f4f1efe2c9f31cc6c31829e01424e079768cedc6eb1e01f7040cf9"
