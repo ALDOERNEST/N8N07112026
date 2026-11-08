@@ -290,7 +290,7 @@
           "value": {
             "Origen": "N8n",
             "Fecha": "={{ $now.toFormat('yyyy-MM-dd') }}",
-            "Descripcion": "Se Obtiene el Token con exito"
+            "Descripcion": "Se Obtiene el Token con exito."
           },
           "matchingColumns": [],
           "schema": [
@@ -531,7 +531,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "8bd4a657-030d-4eea-b0f5-da183fb7389f",
+  "versionId": "08407100-9593-45f5-89d7-43aea14dd614",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "7f9014dae6f4f1efe2c9f31cc6c31829e01424e079768cedc6eb1e01f7040cf9"
