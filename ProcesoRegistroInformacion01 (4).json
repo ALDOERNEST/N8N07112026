@@ -1,0 +1,542 @@
+{
+  "name": "ProcesoRegistroInformacion01",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "0a85670a-93ee-4a68-b395-f208b80487dd",
+        "authentication": "basicAuth",
+        "options": {}
+      },
+      "id": "ab8763cf-4fa4-4a89-999b-cc299e64434b",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        0
+      ],
+      "webhookId": "e4d7ed56-618e-4af0-9971-913bd46d7e0b",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "koHAnVFyFKUkEgDb",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cloud.uipath.com/identity_/connect/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $vars.ClientID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $vars.ClientSecret }}"
+            },
+            {
+              "name": "scope",
+              "value": "OR.Queues OR.Jobs OR.Assets OR.Folders OR.Robots OR.Administration OR.Analytics OR.Audit OR.Execution OR.Hypervisor OR.License OR.Machines OR.ML OR.Monitoring OR.Settings OR.Tasks OR.TestDataQueues OR.TestSets OR.TestSetSchedules OR.Users OR.Webhooks"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ddf454fe-adcd-42cb-bd20-db8b82d59bd4",
+      "name": "Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://cloud.uipath.com/robotizcion/DefaultTenant/orchestrator_/odata/folders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Token').item.json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c10b5a9d-f0b3-428b-8243-e3f2eab47555",
+      "name": "Listar Folders",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        736,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cloud.uipath.com/robotizcion/DefaultTenant/orchestrator_/odata/Queues/UiPathODataSvc.AddQueueItem",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Token').item.json.access_token }}"
+            },
+            {
+              "name": "X-UIPATH-OrganizationUnitId",
+              "value": "={{ $json.value[1].Id }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"itemData\": {\n    \"Name\": \"UIDemo_Queue\",\n    \"Priority\": \"Normal\",\n    \"SpecificContent\": {\n      \"CashIn\": {{ $('Webhook').item.json.body.CashIn }},\n      \"OnUsCheck\": {{ $('Webhook').item.json.body.OnUsCheck }},\n      \"NotOnUsCheck\": {{ $('Webhook').item.json.body.NotOnUsCheck }},\n      \"UseCashCount\": \"{{ $('Webhook').item.json.body.UseCashCount }}\"\n    }\n  }\n} ",
+        "options": {}
+      },
+      "id": "8b48ecd0-dcc3-46b0-8c2b-3e9dca55cec4",
+      "name": "Llenar Cola Procesos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://cloud.uipath.com/robotizcion/DefaultTenant/orchestrator_/odata/Releases",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Token').item.json.access_token }}"
+            },
+            {
+              "name": "X-UIPATH-OrganizationUnitId",
+              "value": "={{ $('Listar Folders').item.json.value[1].Id }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7f187a51-67b8-43d2-832f-bde6e5bbb115",
+      "name": "Obtener Releases",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1088,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cloud.uipath.com/robotizcion/DefaultTenant/orchestrator_/odata/Jobs/UiPath.Server.Configuration.OData.StartJobs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Token').item.json.access_token }}"
+            },
+            {
+              "name": "X-UIPATH-OrganizationUnitId",
+              "value": "={{ $('Listar Folders').item.json.value[1].Id }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"startInfo\": {\n    \"ReleaseKey\":\"{{ $json.value[0].Key }}\",\n    \"Strategy\": \"ModernJobsCount\",\n    \"JobsCount\": \"1\"\n  }\n}",
+        "options": {}
+      },
+      "id": "e0898352-e3d9-43d7-b1a4-e7fa52c2d302",
+      "name": "Ejecutar Bot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1264,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1x9WNm0XyWFWJH9W3wG7deD5KdeSmkexsDinCZK5wC7Q",
+          "mode": "list",
+          "cachedResultName": "Bitacora",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1x9WNm0XyWFWJH9W3wG7deD5KdeSmkexsDinCZK5wC7Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1x9WNm0XyWFWJH9W3wG7deD5KdeSmkexsDinCZK5wC7Q/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Origen": "N8n",
+            "Fecha": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Descripcion": "Se ha empezamos el flujo de N8N"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Origen",
+              "displayName": "Origen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Descripcion",
+              "displayName": "Descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "__PowerAppsId__",
+              "displayName": "__PowerAppsId__",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "266b64d3-1b11-4295-bb86-d23d7d76bc99",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "y3IVQiR8PaHorIl5",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1x9WNm0XyWFWJH9W3wG7deD5KdeSmkexsDinCZK5wC7Q",
+          "mode": "list",
+          "cachedResultName": "Bitacora",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1x9WNm0XyWFWJH9W3wG7deD5KdeSmkexsDinCZK5wC7Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1x9WNm0XyWFWJH9W3wG7deD5KdeSmkexsDinCZK5wC7Q/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Origen": "N8n",
+            "Fecha": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Descripcion": "Se Obtiene el Token"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Origen",
+              "displayName": "Origen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Descripcion",
+              "displayName": "Descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "__PowerAppsId__",
+              "displayName": "__PowerAppsId__",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        592,
+        0
+      ],
+      "id": "b43b0f79-20b8-42b3-abce-b5820ccb1d13",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "y3IVQiR8PaHorIl5",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1x9WNm0XyWFWJH9W3wG7deD5KdeSmkexsDinCZK5wC7Q",
+          "mode": "list",
+          "cachedResultName": "Bitacora",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1x9WNm0XyWFWJH9W3wG7deD5KdeSmkexsDinCZK5wC7Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1x9WNm0XyWFWJH9W3wG7deD5KdeSmkexsDinCZK5wC7Q/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Origen": "N8n",
+            "Fecha": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Descripcion": "Se ejecutó el Bot"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Origen",
+              "displayName": "Origen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Descripcion",
+              "displayName": "Descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "__PowerAppsId__",
+              "displayName": "__PowerAppsId__",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1440,
+        0
+      ],
+      "id": "b8973ce9-5a5b-48d7-bd1c-7da8c586ada9",
+      "name": "Append row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "y3IVQiR8PaHorIl5",
+          "name": "Google Sheets account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar Folders": {
+      "main": [
+        [
+          {
+            "node": "Llenar Cola Procesos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Llenar Cola Procesos": {
+      "main": [
+        [
+          {
+            "node": "Obtener Releases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Releases": {
+      "main": [
+        [
+          {
+            "node": "Ejecutar Bot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Listar Folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar Bot": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "9097c982-c5e9-40e7-83e4-fd1547f36335",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7f9014dae6f4f1efe2c9f31cc6c31829e01424e079768cedc6eb1e01f7040cf9"
+  },
+  "nodeGroups": [],
+  "id": "wyQKUN5CMZQfedcg",
+  "tags": []
+}
