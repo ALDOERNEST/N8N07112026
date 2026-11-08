@@ -1,0 +1,75 @@
+name: Validar Workflows de n8n
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - '**.json'
+
+jobs:
+  validate-json:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validar sintaxis y estructura de los JSON de n8n
+        run: |
+          node -e '
+          const fs = require("fs");
+          const path = require("path");
+
+          function walkDir(dir) {
+            let results = [];
+            const list = fs.readdirSync(dir);
+            list.forEach(file => {
+              file = path.join(dir, file);
+              const stat = fs.statSync(file);
+              if (stat && stat.isDirectory()) {
+                if (!file.includes(".github")) {
+                  results = results.concat(walkDir(file));
+                }
+              } else {
+                if (file.endsWith(".json")) {
+                  results.push(file);
+                }
+              }
+            });
+            return results;
+          }
+
+          const jsonFiles = walkDir(".");
+          let hasError = false;
+
+          console.log(`🔍 Analizando ${jsonFiles.length} archivos JSON...`);
+
+          jsonFiles.forEach(file => {
+            try {
+              const content = fs.readFileSync(file, "utf8");
+              const parsed = JSON.parse(content);
+              
+              if (parsed.nodes && !Array.isArray(parsed.nodes)) {
+                console.error(`❌ Error en ${file}: La propiedad "nodes" debe ser un array.`);
+                hasError = true;
+              } else {
+                console.log(`✅ Válido: ${file}`);
+              }
+            } catch (err) {
+              console.error(`❌ JSON Inválido en ${file}: ${err.message}`);
+              hasError = true;
+            }
+          });
+
+          if (hasError) {
+            console.error("\n❌ Se encontraron errores de sintaxis o estructura en los workflows.");
+            process.exit(1);
+          } else {
+            console.log("\n✨ ¡Todos los workflows de n8n son válidos!");
+          }
+          '
